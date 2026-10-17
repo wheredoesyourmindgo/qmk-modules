@@ -1,6 +1,6 @@
 # Instant One-Shot
 
-One-shot modifiers that press the modifier the moment you press the key.
+One-shot modifiers you can stack reliably. Chord any number of them (Ctrl+Alt+GUI+Shift, all at once or one after another) and every one applies to the next key, every time.
 
 - **Tap** (under 300 ms): the modifier applies to the next key, then releases.
 - **Hold** (300 ms or longer): it acts as a normal modifier and leaves nothing armed when you let go.
@@ -8,8 +8,11 @@ One-shot modifiers that press the modifier the moment you press the key.
 
 ## How it differs from QMK's `OSM()`
 
-`OSM()` waits to find out whether you tapped or held before acting. Instant One-Shot presses the modifier right away, so:
+`OSM()` keys wait to find out whether you tapped or held before arming. When you press several together, each press interrupts the one before it, so QMK treats the earlier keys as holds, and those modifiers are gone once you let go. Chording one-shot mods with `OSM()` drops some of them.
 
+Instant One-Shot presses the modifier and arms the one-shot the moment each key goes down, and each key times its own tap or hold. No key waits on another, so:
+
+- Stacked one-shots always all apply.
 - Holding it has no delay, and modifier-clicks with a mouse (Cmd+click, Shift+click) work while the key is held.
 - A tapped one-shot also applies to the next mouse click, not just the next key.
 - The timeout clears the modifier from the host on time. QMK's `ONESHOT_TIMEOUT` is only checked on the next key event, so until then the host still sees the modifier as held.

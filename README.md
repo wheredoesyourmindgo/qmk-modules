@@ -4,7 +4,7 @@
 
 | Module | What it does |
 |---|---|
-| [Instant One-Shot](instant_oneshot/) | One-shot mods that press the modifier immediately, so holds have no delay and mouse modifier-clicks work |
+| [Instant One-Shot](instant_oneshot/) | One-shot mods you can stack reliably: chord any number and they all apply to the next key. Holds have no delay and mouse modifier-clicks work |
 
 ## Install
 
