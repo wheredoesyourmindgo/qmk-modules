@@ -1,0 +1,16 @@
+{
+    "module_name": "Instant One-Shot",
+    "maintainer": "wheredoesyourmindgo",
+    "license": "GPL-2.0-or-later",
+    "url": "https://github.com/wheredoesyourmindgo/qmk-modules/tree/main/instant_oneshot",
+    "keycodes": [
+        { "key": "INSTANT_ONESHOT_LCTL", "aliases": ["IO_LCTL"] },
+        { "key": "INSTANT_ONESHOT_LSFT", "aliases": ["IO_LSFT"] },
+        { "key": "INSTANT_ONESHOT_LALT", "aliases": ["IO_LALT"] },
+        { "key": "INSTANT_ONESHOT_LGUI", "aliases": ["IO_LGUI"] },
+        { "key": "INSTANT_ONESHOT_RCTL", "aliases": ["IO_RCTL"] },
+        { "key": "INSTANT_ONESHOT_RSFT", "aliases": ["IO_RSFT"] },
+        { "key": "INSTANT_ONESHOT_RALT", "aliases": ["IO_RALT"] },
+        { "key": "INSTANT_ONESHOT_RGUI", "aliases": ["IO_RGUI"] }
+    ]
+}
