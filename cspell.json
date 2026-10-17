@@ -1,0 +1,32 @@
+{
+    "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+    "version": "0.2",
+    "language": "en",
+    "ignorePaths": [
+        "LICENSE"
+    ],
+    "languageSettings": [
+        {
+            "languageId": "c,cpp",
+            "ignoreRegExpList": [
+                "/\\b[A-Z][A-Z0-9_]*\\b/g"
+            ]
+        }
+    ],
+    "words": [
+        "keymap",
+        "keymap's",
+        "keyrecord",
+        "LALT",
+        "LCTL",
+        "LGUI",
+        "LSFT",
+        "oneshot",
+        "RALT",
+        "RCTL",
+        "RGUI",
+        "RSFT",
+        "userspace",
+        "wheredoesyourmindgo"
+    ]
+}
