@@ -1,0 +1,16 @@
+{
+    "module_name": "Stackable One-Shot",
+    "maintainer": "wheredoesyourmindgo",
+    "license": "GPL-2.0-or-later",
+    "url": "https://github.com/wheredoesyourmindgo/qmk-modules/tree/main/stackable_oneshot",
+    "keycodes": [
+        { "key": "STACKABLE_ONESHOT_LCTL", "aliases": ["SOSM_LC"] },
+        { "key": "STACKABLE_ONESHOT_LSFT", "aliases": ["SOSM_LS"] },
+        { "key": "STACKABLE_ONESHOT_LALT", "aliases": ["SOSM_LA"] },
+        { "key": "STACKABLE_ONESHOT_LGUI", "aliases": ["SOSM_LG"] },
+        { "key": "STACKABLE_ONESHOT_RCTL", "aliases": ["SOSM_RC"] },
+        { "key": "STACKABLE_ONESHOT_RSFT", "aliases": ["SOSM_RS"] },
+        { "key": "STACKABLE_ONESHOT_RALT", "aliases": ["SOSM_RA"] },
+        { "key": "STACKABLE_ONESHOT_RGUI", "aliases": ["SOSM_RG"] }
+    ]
+}

@@ -4,7 +4,7 @@
 
 | Module | What it does |
 |---|---|
-| [Instant One-Shot](instant_oneshot/) | One-shot mods you can stack reliably: chord any number and they all apply to the next key. Holds have no delay and mouse modifier-clicks work |
+| [Stackable One-Shot](stackable_oneshot/) | One-shot mods you can stack reliably: chord any number and they all apply to the next key. Holds have no delay and mouse modifier-clicks work |
 
 ## Install
 
@@ -15,4 +15,4 @@ git submodule add https://github.com/wheredoesyourmindgo/qmk-modules.git modules
 git submodule update --init --recursive
 ```
 
-Then add the modules you want to your keymap's `keymap.json`, e.g. `"modules": ["wheredoesyourmindgo/instant_oneshot"]`.
+Then add the modules you want to your keymap's `keymap.json`, e.g. `"modules": ["wheredoesyourmindgo/stackable_oneshot"]`.
