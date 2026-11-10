@@ -1,0 +1,44 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  # Weekly, so a QMK change that breaks a module shows up even when this repo hasn't changed
+  schedule:
+    - cron: '0 14 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: QMK ${{ matrix.qmk }}
+    runs-on: ubuntu-latest
+    # QMK's own image, with the qmk CLI and compilers its test builds need (as QMK's CI uses)
+    container: ghcr.io/qmk/qmk_cli
+    strategy:
+      fail-fast: false
+      matrix:
+        # master is what you build against; develop has the changes coming in QMK's next release
+        qmk: [master, develop]
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: qmk-modules
+
+      - uses: actions/checkout@v7
+        with:
+          repository: qmk/qmk_firmware
+          ref: ${{ matrix.qmk }}
+          path: qmk_firmware
+
+      - name: Set up QMK
+        run: |
+          git config --global --add safe.directory '*'
+          git -C qmk_firmware submodule update --init --depth 1 lib/googletest
+          pip3 install -r qmk_firmware/requirements.txt
+
+      - name: Run tests
+        run: QMK_FIRMWARE="$GITHUB_WORKSPACE/qmk_firmware" qmk-modules/scripts/test.sh

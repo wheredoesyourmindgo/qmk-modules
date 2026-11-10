@@ -95,6 +95,8 @@ The tests use QMK's test framework, so they run against a QMK checkout (found wi
 scripts/test.sh stackable_oneshot
 ```
 
+GitHub Actions also runs them on every push, and weekly against QMK's `master` and `develop` branches, so a QMK change that breaks the module shows up before you update.
+
 They cover tapping, chorded and rolled stacks, holds, the idle timeout, QMK's `ONESHOT_TIMEOUT`, cancelling, and clicks with mouse keys and a pointing device using one-shots up (including drags, and quick modifier-clicks while the key is held).
 
 ## License
