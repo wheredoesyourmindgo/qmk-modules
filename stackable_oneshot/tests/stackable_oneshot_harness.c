@@ -33,7 +33,6 @@ report_mouse_t pointing_device_task_modules(report_mouse_t mouse_report) {
 
 void stackable_oneshot_test_reset(void) {
     memset(press_timers, 0, sizeof(press_timers));
-    held    = 0;
-    clicked = 0;
-    armed   = false;
+    click_done = false;
+    armed      = false;
 }

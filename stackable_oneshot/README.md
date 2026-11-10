@@ -1,10 +1,9 @@
 # Stackable One-Shot
 
-One-shot modifiers you can stack reliably. Chord any number of them (Ctrl+Alt+GUI+Shift, all at once or one after another) and every one applies to the next key, every time.
+One-shot modifiers you can stack reliably. Chord any number of them (Ctrl+Alt+GUI+Shift, all at once or one after another) and every one applies to the next key or click, every time.
 
-- **Tap** (under 300 ms): the modifier applies to the next key, then releases.
+- **Tap** (under 300 ms): the modifier applies to the next key or click, then releases.
 - **Hold** (300 ms or longer): it acts as a normal modifier and leaves nothing armed when you let go.
-- **Modifier-click**: clicking while you hold it counts as a hold however quickly you let go, so a fast Cmd+click doesn't leave Cmd armed for your next key.
 - **Idle timeout**: a one-shot you don't use clears itself after 3 seconds.
 
 ## How it differs from QMK's `OSM()`
@@ -15,13 +14,14 @@ Stackable One-Shot presses the modifier and arms the one-shot the moment each ke
 
 - Stacked one-shots always all apply.
 - Holding it has no delay, and modifier-clicks with a mouse (Cmd+click, Shift+click) work while the key is held.
-- A tapped one-shot also applies to mouse clicks, not just the next key. `OSM()` doesn't tell the host about the modifier until the next key, so a click never sees it.
+- A tapped one-shot also applies to a mouse click, not just the next key. `OSM()` doesn't tell the host about the modifier until the next key, so a click never sees it.
+
+A click uses up the one-shot like a key does: tap Cmd, click, and you get one Cmd+click. The modifier is released after the mouse button comes up, so the whole click, or a Cmd+drag, has it.
 
 ### Trade-off: the host sees the modifier while it's armed
 
-To make mouse clicks work, the modifier is sent to the host as soon as you press it. It stays held there until a key uses it, you cancel it, or the idle timeout clears it. That has some side effects `OSM()` doesn't have:
+To make mouse clicks work, the modifier is sent to the host as soon as you press it. It stays held there until a key or click uses it, you cancel it, or the idle timeout clears it. That has some side effects `OSM()` doesn't have:
 
-- A mouse click doesn't use up the one-shot. Every click until the timeout gets the modifier, not just the first.
 - Other things that react to a held modifier react to it too, e.g. Ctrl + scroll wheel zooms in most apps.
 - If an armed GUI or Alt times out unused, the host sees a lone tap of it. On Windows and Linux that can open the Start menu or launcher (GUI) or focus the menu bar (Alt).
 
@@ -29,7 +29,7 @@ Lower `STACKABLE_ONESHOT_TIMEOUT` if these get in the way.
 
 ### Clicks from a separate mouse
 
-Clicking while holding the key only counts as a hold when the keyboard sees the click: a mouse key (`MS_BTN1` and so on) or a pointing device built into the keyboard. A separate USB mouse talks to the host directly, so the keyboard never knows. For modifier-clicks with one, hold the key past the tapping term. Otherwise the modifier stays armed for your next key until it times out or you cancel it (for example with an Escape key wired to `stackable_oneshot_cancel()`, below).
+A click only uses up the one-shot when the keyboard sees it: a mouse key (`MS_BTN1` and so on) or a pointing device built into the keyboard. A separate USB mouse talks to the host directly, so the keyboard never knows. With one, a tapped one-shot applies to every click until a key uses it, it times out, or you cancel it (for example with an Escape key wired to `stackable_oneshot_cancel()`, below). Holding the key past the tapping term instead works like a normal modifier with any mouse.
 
 ## Install
 
@@ -97,7 +97,7 @@ The tests use QMK's test framework, so they run against a QMK checkout (found wi
 scripts/test.sh stackable_oneshot
 ```
 
-They cover tapping, chorded and rolled stacks, holds, the idle timeout, QMK's `ONESHOT_TIMEOUT`, cancelling, and modifier-clicks with mouse keys and a pointing device.
+They cover tapping, chorded and rolled stacks, holds, the idle timeout, QMK's `ONESHOT_TIMEOUT`, cancelling, and clicks with mouse keys and a pointing device using one-shots up (including drags, and quick modifier-clicks while the key is held).
 
 ## License
 

@@ -199,9 +199,9 @@ TEST_F(StackableOneShot, CancelClearsArmedModifier) {
     VERIFY_AND_CLEAR(driver);
 }
 
-// A quick modifier-click: hold GUI, click, let go of GUI within the tapping term. The press was
-// used for the click, so it must not leave GUI armed for the next key (here W, which would make
-// GUI+W and close a tab).
+// A quick modifier-click: hold GUI, click, let go of GUI within the tapping term. The click uses
+// up the one-shot, so GUI isn't left armed for the next key (here W, which would make GUI+W and
+// close a tab). While the key is held, GUI stays down as a normal modifier.
 TEST_F(StackableOneShot, QuickModifierClickLeavesNothingArmed) {
     TestDriver driver;
     InSequence s;
@@ -245,20 +245,74 @@ TEST_F(StackableOneShot, TapAfterModifierClickIsOneShot) {
     VERIFY_AND_CLEAR(driver);
 }
 
-// A click after a tap (key already released) doesn't use up the one-shot, as the README says:
-// the click gets the modifier, and so does the next key.
-TEST_F(StackableOneShot, ClickAfterTapKeepsOneShotArmed) {
+// A click uses up a tapped one-shot, like a key does: one Cmd+click, then plain clicks and keys.
+// The modifier is released only after the button-up, so the whole click has it.
+TEST_F(StackableOneShot, ClickUsesUpTappedOneShot) {
     TestDriver driver;
     InSequence s;
     use_all_keys();
 
     EXPECT_REPORT(driver, (KC_LGUI));
     tap_key(lgui);
+    VERIFY_AND_CLEAR(driver);
+
+    EXPECT_MOUSE_REPORT(driver, (0, 0, 0, 0, 1));
+    EXPECT_EMPTY_MOUSE_REPORT(driver);
+    EXPECT_EMPTY_REPORT(driver);
+    tap_key(btn1);
+    VERIFY_AND_CLEAR(driver);
+
+    // A second click is plain.
+    EXPECT_NO_REPORT(driver);
     click(driver);
     VERIFY_AND_CLEAR(driver);
 
-    EXPECT_REPORT(driver, (KC_LGUI, KC_W));
+    EXPECT_REPORT(driver, (KC_W));
     EXPECT_EMPTY_REPORT(driver);
     tap_key(key_w);
+    VERIFY_AND_CLEAR(driver);
+}
+
+// A drag (button held) keeps the modifier until the button is released.
+TEST_F(StackableOneShot, DragKeepsModifierUntilButtonUp) {
+    TestDriver driver;
+    InSequence s;
+    use_all_keys();
+
+    EXPECT_REPORT(driver, (KC_LGUI));
+    tap_key(lgui);
+
+    EXPECT_MOUSE_REPORT(driver, (0, 0, 0, 0, 1));
+    btn1.press();
+    run_one_scan_loop();
+    VERIFY_AND_CLEAR(driver);
+
+    EXPECT_NO_REPORT(driver);
+    idle_for(500);
+    VERIFY_AND_CLEAR(driver);
+
+    EXPECT_EMPTY_MOUSE_REPORT(driver);
+    EXPECT_EMPTY_REPORT(driver);
+    btn1.release();
+    run_one_scan_loop();
+    VERIFY_AND_CLEAR(driver);
+}
+
+// Stacked one-shots all apply to the click, and are all used up by it.
+TEST_F(StackableOneShot, StackedOneShotsApplyToClick) {
+    TestDriver driver;
+    InSequence s;
+    use_all_keys();
+
+    EXPECT_REPORT(driver, (KC_LCTL));
+    tap_key(lctl);
+    EXPECT_REPORT(driver, (KC_LCTL, KC_LSFT));
+    tap_key(lsft);
+    VERIFY_AND_CLEAR(driver);
+
+    EXPECT_MOUSE_REPORT(driver, (0, 0, 0, 0, 1));
+    EXPECT_EMPTY_MOUSE_REPORT(driver);
+    EXPECT_EMPTY_REPORT(driver);
+    tap_key(btn1);
     VERIFY_AND_CLEAR(driver);
 }

@@ -13,9 +13,10 @@ ASSERT_COMMUNITY_MODULES_MIN_API_VERSION(1, 0, 0);
 _Static_assert(STACKABLE_ONESHOT_RGUI - STACKABLE_ONESHOT_LCTL == 7, "Stackable One-Shot keycodes must be contiguous");
 static uint16_t press_timers[8];
 
-// Keys currently held, and held keys that a mouse click happened during, one bit per key.
-static uint8_t held    = 0;
-static uint8_t clicked = 0;
+// Set when a mouse button the keyboard sends is released, so the next housekeeping uses up the
+// one-shot. That runs after the button-up has gone to the host, so the click (or drag) keeps the
+// modifier to the end.
+static bool click_done = false;
 
 // Set while a one-shot from this module may still be visible to the host.
 static bool armed = false;
@@ -36,6 +37,15 @@ bool stackable_oneshot_cancel(void) {
 // This module sends a one-shot to the host as soon as it is pressed, so the host keeps
 // seeing it until a report goes out without it. This makes sure one does.
 void housekeeping_task_stackable_oneshot(void) {
+    if (click_done) {
+        // A click uses up armed one-shots, like a key does. A key that's still held keeps its
+        // modifier as a normal hold; it just leaves nothing armed when released.
+        click_done = false;
+        if (get_oneshot_mods()) {
+            clear_oneshot_mods();
+            send_keyboard_report();
+        }
+    }
     if (!armed) {
         return;
     }
@@ -60,11 +70,11 @@ void housekeeping_task_stackable_oneshot(void) {
 }
 
 #ifdef POINTING_DEVICE_ENABLE
-// Mouse buttons on a pointing device (trackball, trackpad) count as clicks too.
+// Buttons on a pointing device (trackball, trackpad) count as clicks too.
 report_mouse_t pointing_device_task_stackable_oneshot(report_mouse_t mouse_report) {
     static uint8_t last_buttons = 0;
-    if (mouse_report.buttons & ~last_buttons) {
-        clicked |= held;
+    if (last_buttons & ~mouse_report.buttons) {
+        click_done = true;
     }
     last_buttons = mouse_report.buttons;
     return pointing_device_task_stackable_oneshot_kb(mouse_report);
@@ -76,11 +86,9 @@ bool process_record_stackable_oneshot(uint16_t keycode, keyrecord_t *record) {
         return false;
     }
 
-    // A click doesn't use up a one-shot the way a key does, so a quick modifier-click would
-    // otherwise look like a tap and leave the modifier armed for the next key. A click while a
-    // key is held makes that press count as a hold.
-    if (record->event.pressed && IS_MOUSEKEY_BUTTON(keycode)) {
-        clicked |= held;
+    // QMK only uses up one-shots on keys, so a click on a mouse key would leave them armed
+    if (!record->event.pressed && IS_MOUSEKEY_BUTTON(keycode)) {
+        click_done = true;
         return true;
     }
 
@@ -96,29 +104,22 @@ bool process_record_stackable_oneshot(uint16_t keycode, keyrecord_t *record) {
         case STACKABLE_ONESHOT_RGUI: mod_bit = MOD_BIT(KC_RGUI); break;
         default: return true;
     }
-    const uint8_t index       = keycode - STACKABLE_ONESHOT_LCTL;
-    const uint8_t key_bit     = 1 << index;
-    uint16_t     *press_timer = &press_timers[index];
+    uint16_t *press_timer = &press_timers[keycode - STACKABLE_ONESHOT_LCTL];
 
     if (record->event.pressed) {
         // Press the modifier now and arm the one-shot, so it works whether this is a tap or a hold
         register_mods(mod_bit);
         add_oneshot_mods(mod_bit);
         *press_timer = timer_read();
-        held |= key_bit;
-        clicked &= ~key_bit;
-        armed = true;
+        armed        = true;
 #if STACKABLE_ONESHOT_TIMEOUT > 0
         armed_at = *press_timer;
 #endif
         send_keyboard_report();
     } else {
         unregister_mods(mod_bit);
-        const bool was_clicked = clicked & key_bit;
-        held &= ~key_bit;
-        clicked &= ~key_bit;
-        // A hold (long, or used for a click) was a plain modifier, so leave nothing armed once it's released
-        if (was_clicked || timer_elapsed(*press_timer) > STACKABLE_ONESHOT_TAPPING_TERM) {
+        // A hold was a plain modifier, so leave nothing armed once it's released
+        if (timer_elapsed(*press_timer) > STACKABLE_ONESHOT_TAPPING_TERM) {
             del_oneshot_mods(mod_bit);
             send_keyboard_report();
         }

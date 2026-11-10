@@ -1,8 +1,8 @@
 // Copyright 2026 wheredoesyourmindgo
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-// A quick modifier-click with a pointing device's button (trackball, trackpad) instead of a mouse
-// key must not leave the modifier armed either.
+// Clicks with a pointing device's buttons (trackball, trackpad) use up one-shots the same way
+// clicks on mouse keys do.
 
 #include "keyboard_report_util.hpp"
 #include "mouse_report_util.hpp"
@@ -76,6 +76,30 @@ TEST_F(StackableOneShotPointing, MovementDoesNotCountAsClick) {
     VERIFY_AND_CLEAR(driver);
 
     EXPECT_REPORT(driver, (KC_LGUI, KC_W));
+    EXPECT_EMPTY_REPORT(driver);
+    tap_key(key_w);
+    VERIFY_AND_CLEAR(driver);
+}
+
+TEST_F(StackableOneShotPointing, ClickUsesUpTappedOneShot) {
+    TestDriver driver;
+    InSequence s;
+    set_keymap({lgui, key_w});
+
+    EXPECT_REPORT(driver, (KC_LGUI));
+    tap_key(lgui);
+    VERIFY_AND_CLEAR(driver);
+
+    EXPECT_MOUSE_REPORT(driver, (0, 0, 0, 0, 1));
+    pd_press_button(POINTING_DEVICE_BUTTON1);
+    run_one_scan_loop();
+    EXPECT_EMPTY_MOUSE_REPORT(driver);
+    EXPECT_EMPTY_REPORT(driver);
+    pd_release_button(POINTING_DEVICE_BUTTON1);
+    run_one_scan_loop();
+    VERIFY_AND_CLEAR(driver);
+
+    EXPECT_REPORT(driver, (KC_W));
     EXPECT_EMPTY_REPORT(driver);
     tap_key(key_w);
     VERIFY_AND_CLEAR(driver);
