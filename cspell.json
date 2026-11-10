@@ -22,6 +22,7 @@
         "LGUI",
         "LSFT",
         "oneshot",
+        "pd",
         "RALT",
         "RCTL",
         "RGUI",
@@ -29,6 +30,7 @@
         "SOSM",
         "stackable",
         "userspace",
+        "VPATH",
         "wheredoesyourmindgo"
     ]
 }

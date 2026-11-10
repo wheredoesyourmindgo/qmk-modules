@@ -16,3 +16,12 @@ git submodule update --init --recursive
 ```
 
 Then add the modules you want to your keymap's `keymap.json`, e.g. `"modules": ["wheredoesyourmindgo/stackable_oneshot"]`.
+
+## Tests
+
+`scripts/test.sh` runs each module's tests with QMK's test framework, against your QMK checkout:
+
+```sh
+scripts/test.sh                      # every module that has tests
+scripts/test.sh stackable_oneshot    # one module
+```

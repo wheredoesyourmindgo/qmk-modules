@@ -13,6 +13,10 @@ ASSERT_COMMUNITY_MODULES_MIN_API_VERSION(1, 0, 0);
 _Static_assert(STACKABLE_ONESHOT_RGUI - STACKABLE_ONESHOT_LCTL == 7, "Stackable One-Shot keycodes must be contiguous");
 static uint16_t press_timers[8];
 
+// Keys currently held, and held keys that a mouse click happened during, one bit per key.
+static uint8_t held    = 0;
+static uint8_t clicked = 0;
+
 // Set while a one-shot from this module may still be visible to the host.
 static bool armed = false;
 #if STACKABLE_ONESHOT_TIMEOUT > 0
@@ -55,9 +59,29 @@ void housekeeping_task_stackable_oneshot(void) {
 #endif
 }
 
+#ifdef POINTING_DEVICE_ENABLE
+// Mouse buttons on a pointing device (trackball, trackpad) count as clicks too.
+report_mouse_t pointing_device_task_stackable_oneshot(report_mouse_t mouse_report) {
+    static uint8_t last_buttons = 0;
+    if (mouse_report.buttons & ~last_buttons) {
+        clicked |= held;
+    }
+    last_buttons = mouse_report.buttons;
+    return pointing_device_task_stackable_oneshot_kb(mouse_report);
+}
+#endif
+
 bool process_record_stackable_oneshot(uint16_t keycode, keyrecord_t *record) {
     if (!process_record_stackable_oneshot_kb(keycode, record)) {
         return false;
+    }
+
+    // A click doesn't use up a one-shot the way a key does, so a quick modifier-click would
+    // otherwise look like a tap and leave the modifier armed for the next key. A click while a
+    // key is held makes that press count as a hold.
+    if (record->event.pressed && IS_MOUSEKEY_BUTTON(keycode)) {
+        clicked |= held;
+        return true;
     }
 
     uint8_t mod_bit;
@@ -72,22 +96,29 @@ bool process_record_stackable_oneshot(uint16_t keycode, keyrecord_t *record) {
         case STACKABLE_ONESHOT_RGUI: mod_bit = MOD_BIT(KC_RGUI); break;
         default: return true;
     }
-    uint16_t *press_timer = &press_timers[keycode - STACKABLE_ONESHOT_LCTL];
+    const uint8_t index       = keycode - STACKABLE_ONESHOT_LCTL;
+    const uint8_t key_bit     = 1 << index;
+    uint16_t     *press_timer = &press_timers[index];
 
     if (record->event.pressed) {
         // Press the modifier now and arm the one-shot, so it works whether this is a tap or a hold
         register_mods(mod_bit);
         add_oneshot_mods(mod_bit);
         *press_timer = timer_read();
-        armed        = true;
+        held |= key_bit;
+        clicked &= ~key_bit;
+        armed = true;
 #if STACKABLE_ONESHOT_TIMEOUT > 0
         armed_at = *press_timer;
 #endif
         send_keyboard_report();
     } else {
         unregister_mods(mod_bit);
-        // A hold was a plain modifier, so leave nothing armed once it's released
-        if (timer_elapsed(*press_timer) > STACKABLE_ONESHOT_TAPPING_TERM) {
+        const bool was_clicked = clicked & key_bit;
+        held &= ~key_bit;
+        clicked &= ~key_bit;
+        // A hold (long, or used for a click) was a plain modifier, so leave nothing armed once it's released
+        if (was_clicked || timer_elapsed(*press_timer) > STACKABLE_ONESHOT_TAPPING_TERM) {
             del_oneshot_mods(mod_bit);
             send_keyboard_report();
         }

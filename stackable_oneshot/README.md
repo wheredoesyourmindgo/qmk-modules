@@ -4,6 +4,7 @@ One-shot modifiers you can stack reliably. Chord any number of them (Ctrl+Alt+GU
 
 - **Tap** (under 300 ms): the modifier applies to the next key, then releases.
 - **Hold** (300 ms or longer): it acts as a normal modifier and leaves nothing armed when you let go.
+- **Modifier-click**: clicking while you hold it counts as a hold however quickly you let go, so a fast Cmd+click doesn't leave Cmd armed for your next key.
 - **Idle timeout**: a one-shot you don't use clears itself after 3 seconds.
 
 ## How it differs from QMK's `OSM()`
@@ -25,6 +26,10 @@ To make mouse clicks work, the modifier is sent to the host as soon as you press
 - If an armed GUI or Alt times out unused, the host sees a lone tap of it. On Windows and Linux that can open the Start menu or launcher (GUI) or focus the menu bar (Alt).
 
 Lower `STACKABLE_ONESHOT_TIMEOUT` if these get in the way.
+
+### Clicks from a separate mouse
+
+Clicking while holding the key only counts as a hold when the keyboard sees the click: a mouse key (`MS_BTN1` and so on) or a pointing device built into the keyboard. A separate USB mouse talks to the host directly, so the keyboard never knows. For modifier-clicks with one, hold the key past the tapping term. Otherwise the modifier stays armed for your next key until it times out or you cancel it (for example with an Escape key wired to `stackable_oneshot_cancel()`, below).
 
 ## Install
 
@@ -83,6 +88,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 ```
+
+## Tests
+
+The tests use QMK's test framework, so they run against a QMK checkout (found with `qmk env QMK_FIRMWARE`, or set `QMK_FIRMWARE`). From this repo:
+
+```sh
+scripts/test.sh stackable_oneshot
+```
+
+They cover tapping, chorded and rolled stacks, holds, the idle timeout, QMK's `ONESHOT_TIMEOUT`, cancelling, and modifier-clicks with mouse keys and a pointing device.
 
 ## License
 
