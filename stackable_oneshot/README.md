@@ -8,13 +8,11 @@ One-shot modifiers you can stack reliably. Chord any number of them (Ctrl+Alt+GU
 
 ## How it differs from QMK's `OSM()`
 
-`OSM()` keys wait to find out whether you tapped or held before arming. When you press several together, each press interrupts the one before it, so QMK treats the earlier keys as holds, and those modifiers are gone once you let go. Chording one-shot mods with `OSM()` drops some of them.
+`OSM()` keys go through QMK's tap-hold handling: nothing reaches the host until QMK decides whether you tapped or held, and a tapped one-shot is only added to the next key. Stackable One-Shot presses the modifier and arms the one-shot the moment each key goes down, and each key times its own tap or hold. So:
 
-Stackable One-Shot presses the modifier and arms the one-shot the moment each key goes down, and each key times its own tap or hold. No key waits on another, so:
-
-- Stacked one-shots always all apply.
-- Holding it has no delay, and modifier-clicks with a mouse (Cmd+click, Shift+click) work while the key is held.
-- A tapped one-shot also applies to a mouse click, not just the next key. `OSM()` doesn't tell the host about the modifier until the next key, so a click never sees it.
+- **A tapped one-shot applies to a mouse click**, not just the next key. With `OSM()` the host never sees the modifier until a key comes along, so tap Cmd then click is a plain click.
+- **Holding it has no delay.** An `OSM()` hold only reaches the host once the tapping term runs out, so a quick Cmd+click or Ctrl+scroll while holding the key misses the modifier.
+- **Stacking works with any tap-hold settings.** `OSM()` stacks chorded one-shots fine with QMK's default settings, but if Permissive Hold or Hold On Other Key Press applies to the `OSM()` keys, each key pressed during a chord makes the ones before it holds, and those modifiers are dropped.
 
 A click uses up the one-shot like a key does: tap Cmd, click, and you get one Cmd+click. The modifier is released after the mouse button comes up, so the whole click, or a Cmd+drag, has it.
 
