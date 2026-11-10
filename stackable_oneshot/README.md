@@ -14,8 +14,17 @@ Stackable One-Shot presses the modifier and arms the one-shot the moment each ke
 
 - Stacked one-shots always all apply.
 - Holding it has no delay, and modifier-clicks with a mouse (Cmd+click, Shift+click) work while the key is held.
-- A tapped one-shot also applies to the next mouse click, not just the next key.
-- The timeout clears the modifier from the host on time. QMK's `ONESHOT_TIMEOUT` is only checked on the next key event, so until then the host still sees the modifier as held.
+- A tapped one-shot also applies to mouse clicks, not just the next key. `OSM()` doesn't tell the host about the modifier until the next key, so a click never sees it.
+
+### Trade-off: the host sees the modifier while it's armed
+
+To make mouse clicks work, the modifier is sent to the host as soon as you press it. It stays held there until a key uses it, you cancel it, or the idle timeout clears it. That has some side effects `OSM()` doesn't have:
+
+- A mouse click doesn't use up the one-shot. Every click until the timeout gets the modifier, not just the first.
+- Other things that react to a held modifier react to it too, e.g. Ctrl + scroll wheel zooms in most apps.
+- If an armed GUI or Alt times out unused, the host sees a lone tap of it. On Windows and Linux that can open the Start menu or launcher (GUI) or focus the menu bar (Alt).
+
+Lower `STACKABLE_ONESHOT_TIMEOUT` if these get in the way.
 
 ## Install
 
@@ -57,6 +66,8 @@ In your `config.h`:
 #define STACKABLE_ONESHOT_TAPPING_TERM 300  // ms; hold longer than this to use it as a normal modifier
 #define STACKABLE_ONESHOT_TIMEOUT 3000      // ms; 0 disables the idle timeout
 ```
+
+QMK's own `ONESHOT_TIMEOUT` also applies to these one-shots if you set it. Whichever timeout is shorter wins.
 
 ## Cancelling from your own code
 

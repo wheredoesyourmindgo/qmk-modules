@@ -13,10 +13,11 @@ ASSERT_COMMUNITY_MODULES_MIN_API_VERSION(1, 0, 0);
 _Static_assert(STACKABLE_ONESHOT_RGUI - STACKABLE_ONESHOT_LCTL == 7, "Stackable One-Shot keycodes must be contiguous");
 static uint16_t press_timers[8];
 
+// Set while a one-shot from this module may still be visible to the host.
+static bool armed = false;
 #if STACKABLE_ONESHOT_TIMEOUT > 0
-// When the most recent one-shot was armed; only checked while timeout_armed is set.
-static uint16_t armed_at      = 0;
-static bool     timeout_armed = false;
+// When the most recent one-shot was armed; only checked while armed is set.
+static uint16_t armed_at = 0;
 #endif
 
 bool stackable_oneshot_cancel(void) {
@@ -28,22 +29,31 @@ bool stackable_oneshot_cancel(void) {
     return true;
 }
 
-#if STACKABLE_ONESHOT_TIMEOUT > 0
-// Unlike QMK's ONESHOT_TIMEOUT, which is only checked on the next key event, this clears the
-// modifier from the host on time, so a later mouse click doesn't pick it up.
+// This module sends a one-shot to the host as soon as it is pressed, so the host keeps
+// seeing it until a report goes out without it. This makes sure one does.
 void housekeeping_task_stackable_oneshot(void) {
-    if (!timeout_armed) {
+    if (!armed) {
         return;
     }
     if (!get_oneshot_mods()) {
-        timeout_armed = false; // Used or cancelled
-    } else if (timer_elapsed(armed_at) > STACKABLE_ONESHOT_TIMEOUT) {
-        timeout_armed = false;
+        // Used by a key, cancelled, or cleared elsewhere. QMK's own ONESHOT_TIMEOUT (and other
+        // code calling clear_oneshot_mods()) clears it without sending a report, which would leave
+        // the modifier held on the host. While a key is still held, skip this: the one-shot was
+        // used by that key, and its release sends a report anyway. Sending one now would drop the
+        // modifier early and change what the host repeats.
+        if (!has_anykey()) {
+            armed = false;
+            send_keyboard_report();
+        }
+    }
+#if STACKABLE_ONESHOT_TIMEOUT > 0
+    else if (timer_elapsed(armed_at) > STACKABLE_ONESHOT_TIMEOUT) {
+        armed = false;
         clear_oneshot_mods();
         send_keyboard_report();
     }
-}
 #endif
+}
 
 bool process_record_stackable_oneshot(uint16_t keycode, keyrecord_t *record) {
     if (!process_record_stackable_oneshot_kb(keycode, record)) {
@@ -69,9 +79,9 @@ bool process_record_stackable_oneshot(uint16_t keycode, keyrecord_t *record) {
         register_mods(mod_bit);
         add_oneshot_mods(mod_bit);
         *press_timer = timer_read();
+        armed        = true;
 #if STACKABLE_ONESHOT_TIMEOUT > 0
-        armed_at      = *press_timer;
-        timeout_armed = true;
+        armed_at = *press_timer;
 #endif
         send_keyboard_report();
     } else {
